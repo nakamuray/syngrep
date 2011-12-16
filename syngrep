@@ -1,0 +1,38 @@
+#!/bin/bash
+usage() {
+  echo "usage: $(basename "$0") [-s syntax_pattern] /pattern/ file [file...]"
+}
+
+real_path="$(readlink -f "$0")"
+cur_dir="$(dirname "${real_path}")"
+syngrep_vim="${cur_dir}"/syngrep.vim
+
+syntax_pattern=''
+
+if [[ $# == 0 ]]; then
+  usage
+  exit 1
+fi
+
+while getopts 'hs:' opt; do
+  case "${opt}" in
+    h)
+      usage
+      exit
+      ;;
+    s)
+      syntax_pattern="${OPTARG}"
+      ;;
+  esac
+done
+
+shift $(( ${OPTIND} - 1 ))
+
+export TERM="dumb"
+
+# TODO: escape $*, $syntax_pattern
+if [[ -n "${syntax_pattern}" ]]; then
+  vim -e -R -u "${syngrep_vim}" -c ":call SyntaxGrep('$*', '${syntax_pattern}')" -c ':quit'
+else
+  vim -e -R -u "${syngrep_vim}" -c ":call SyntaxGrep('$*')" -c ':quit'
+fi
